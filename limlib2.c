@@ -1199,7 +1199,7 @@ static const struct luaL_Reg image_m [] = {
   {"get_format", imagem_get_format},
   {"set_format", imagem_set_format},
   {"has_alpha", imagem_has_alpha},
-  {"set_has_alpha", imagem_set_alpha},
+  {"set_alpha", imagem_set_alpha},
   {"get_border", imagem_get_border},
   {"set_border", imagem_set_border},
   {"get_pixel", imagem_get_pixel},
