@@ -63,7 +63,7 @@ static int color_new(lua_State *L) {
   args[3]=luaL_optint(L, 4, 255); /* alpha */
   for (i=0; i<4; i++)
     luaL_argcheck(L, args[i] >= 0 && args[i] <= 255, i+1, "values must be >= 0 and <= 255");
-  
+
   c = push_Color(L);
   c->red=args[0];
   c->green=args[1];
@@ -505,7 +505,7 @@ static int fontm_get_advance(lua_State *L) {
 /* fnt:get_inset(str) */
 static int fontm_get_inset(lua_State *L) {
   Font fo = check_Font(L, 1);
-  
+
   imlib_context_set_font(fo);
   lua_pushinteger(L, imlib_get_text_inset(luaL_checkstring(L, 2)));
   return 1;
@@ -718,7 +718,7 @@ static int imagem_get_pixel(lua_State *L) {
   return 1;
 }
 
-/*** imlib2.image metamethods which wrap functions that return copies (but are  
+/*** imlib2.image metamethods which wrap functions that return copies (but are
  * written to change self, to fit in with the rest of the api
  ***/
 
