@@ -1068,6 +1068,128 @@ static int imagem_save(lua_State *L) {
   }
 }
 
+/* imlib2.ext */
+
+/* TODO: Reduce copy-paste between ext_get_bounding_rect_by* functions */
+
+/* imlib2.ext.get_bounding_rect_by_alpha_threshold(image, alpha) : x, y, w, h */
+static int ext_get_bounding_rect_by_alpha_threshold(lua_State *L) {
+  int min_x = INT_MAX;
+  int max_x = 0;
+  int min_y = INT_MAX;
+  int max_y = 0;
+  int width = 0;
+  int height = 0;
+  int x = 0;
+  int y = 0;
+
+  DATA32 * datap = NULL;
+
+  Image im = check_Image(L, 1);
+
+  int alpha = luaL_checkint(L, 2);
+  luaL_argcheck(
+       L,
+       alpha >= 0 && alpha <= 255,
+       2,
+       "alpha must be >= 0 and <= 255"
+     );
+
+  imlib_context_set_image(im);
+  datap = imlib_image_get_data_for_reading_only();
+
+  width = imlib_image_get_width();
+  height = imlib_image_get_height();
+
+  for (y = 0; y < height; ++y) {
+    for (x = 0; x < width; ++x) {
+      DATA32 pixel = datap[x + y * width];
+      int a = (int)((pixel >> 24) & 0xff);
+      if (a >= alpha) {
+        min_x = (x < min_x) ? x : min_x;
+        max_x = (x > max_x) ? x : max_x;
+        min_y = (y < min_y) ? y : min_y;
+        max_y = (y > max_y) ? y : max_y;
+      }
+    }
+  }
+
+  if (min_x == INT_MAX || min_y == INT_MAX) {
+    /* Not found */
+    lua_pushinteger(L, 0);
+    lua_pushinteger(L, 0);
+    lua_pushinteger(L, 0);
+    lua_pushinteger(L, 0);
+  } else {
+    lua_pushinteger(L, min_x);
+    lua_pushinteger(L, min_y);
+    lua_pushinteger(L, max_x - min_x + 1);
+    lua_pushinteger(L, max_y - min_y + 1);
+  }
+
+  return 4;
+}
+
+/* imlib2.ext.get_bounding_rect_by_empty_color(image, empty_color) : x, y, w, h */
+static int ext_get_bounding_rect_by_empty_color(lua_State *L) {
+  int min_x = INT_MAX;
+  int max_x = 0;
+  int min_y = INT_MAX;
+  int max_y = 0;
+  int width = 0;
+  int height = 0;
+  int x = 0;
+  int y = 0;
+
+  DATA32 * datap = NULL;
+
+  Image im = check_Image(L, 1);
+
+  Imlib_Color * empty_color = check_color(L, 2);
+
+  imlib_context_set_image(im);
+  datap = imlib_image_get_data_for_reading_only();
+
+  width = imlib_image_get_width();
+  height = imlib_image_get_height();
+
+  for (y = 0; y < height; ++y) {
+    for (x = 0; x < width; ++x) {
+      DATA32 pixel = datap[x + y * width];
+      int b = (int)((pixel) & 0xff);
+      int g = (int)((pixel >> 8) & 0xff);
+      int r = (int)((pixel >> 16) & 0xff);
+      int a = (int)((pixel >> 24) & 0xff);
+      if (
+          r != empty_color->red ||
+          g != empty_color->green ||
+          b != empty_color->blue ||
+          a != empty_color->alpha
+        ) {
+        min_x = (x < min_x) ? x : min_x;
+        max_x = (x > max_x) ? x : max_x;
+        min_y = (y < min_y) ? y : min_y;
+        max_y = (y > max_y) ? y : max_y;
+      }
+    }
+  }
+
+  if (min_x == INT_MAX || min_y == INT_MAX) {
+    /* Not found */
+    lua_pushinteger(L, 0);
+    lua_pushinteger(L, 0);
+    lua_pushinteger(L, 0);
+    lua_pushinteger(L, 0);
+  } else {
+    lua_pushinteger(L, min_x);
+    lua_pushinteger(L, min_y);
+    lua_pushinteger(L, max_x - min_x + 1);
+    lua_pushinteger(L, max_y - min_y + 1);
+  }
+
+  return 4;
+}
+
 /* imlib2 */
 
 /* imlib2.set_anti_alias(bool) */
@@ -1233,6 +1355,12 @@ static const struct luaL_Reg image_m [] = {
   {NULL, NULL}
 };
 
+static const struct luaL_Reg ext_f [] = {
+  {"get_bounding_rect_by_alpha_threshold",ext_get_bounding_rect_by_alpha_threshold},
+  {"get_bounding_rect_by_empty_color", ext_get_bounding_rect_by_empty_color},
+  {NULL, NULL}
+};
+
 static const struct luaL_Reg f [] = {
   {"set_anti_alias", set_anti_alias},
   {"get_anti_alias", get_anti_alias},
@@ -1280,6 +1408,8 @@ int luaopen_limlib2(lua_State *L) {
   lua_setfield(L, -2, "__index");
   luaL_register(L, NULL, image_m);
   luaL_register(L, "imlib2.image", image_f);
+
+  luaL_register(L, "imlib2.ext", ext_f);
 
   luaL_register(L, "imlib2", f);
 
