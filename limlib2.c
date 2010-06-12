@@ -1056,14 +1056,14 @@ static int imagem_save(lua_State *L) {
 
   Image im = check_Image(L, 1);
   imlib_context_set_image(im);
-  imlib_save_image_with_error_return(luaL_checkstring(L,2), &err);
+  imlib_save_image_with_error_return(luaL_checkstring(L, 2), &err);
 
   if (err == IMLIB_LOAD_ERROR_NONE) {
     lua_pushboolean(L, 1);
     return 1;
   } else {
     lua_pushnil(L);
-    push_load_error_str(L, err, luaL_checkstring(L, 1));
+    push_load_error_str(L, err, luaL_checkstring(L, 2));
     return 2;
   }
 }
